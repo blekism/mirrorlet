@@ -41,3 +41,6 @@ foreach ($e in @('d3d11h264dec','d3d11h265dec','d3d12h264dec')) {
   Write-Host "   hardware decoder ${e}: $state"
 }
 Write-Host 'Bundle OK.'
+# GitHub's pwsh wrapper exits with $LASTEXITCODE of the last native command, which is
+# the (expected) "not found" from the optional decoder probe above. Exit 0 explicitly.
+exit 0
