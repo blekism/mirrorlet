@@ -10,6 +10,7 @@ const { buildUxplayArgs, normalizeSettings, DEFAULTS } = require('./uxplay-args'
 const { UxplayLogParser } = require('./log-parser');
 const net = require('./windows-net');
 const { revealVideoWindow } = require('./video-window');
+const { isGuiExe } = require('./pe-subsystem');
 
 // ---------- single instance ----------
 if (!app.requestSingleInstanceLock()) {
@@ -147,7 +148,12 @@ function startReceiver() {
 
   let child;
   try {
-    child = spawn(exe, args, { env: uxplayEnv(), windowsHide: true, cwd: userData });
+    // A GUI-subsystem uxplay.exe (see build-uxplay.sh) has no console, so it must NOT be
+    // started hidden: windowsHide would make Windows hide GStreamer's video window too.
+    // Only an old console-subsystem build still needs windowsHide to suppress its console.
+    const gui = isGuiExe(exe);
+    if (!gui) pushLog('> note: uxplay.exe is a console build; the mirror window may start hidden (rebuild with scripts/build-uxplay.sh)');
+    child = spawn(exe, args, { env: uxplayEnv(), windowsHide: !gui, cwd: userData });
   } catch (e) {
     setStatus('error', { error: `Could not start UxPlay: ${e.message}` });
     return;
@@ -229,7 +235,7 @@ async function showVideoWindow(opts = {}) {
   const child = receiver.child;
   if (!child) return { ok: false, detail: 'receiver not running' };
   const r = await revealVideoWindow(child.pid, opts);
-  pushLog(r.ok ? '> mirror window shown' : `> mirror window not found yet (${r.detail || 'no window'})`);
+  pushLog(r.ok ? `> mirror window: ${r.detail.replace(/^revealed /, '')}` : `> mirror window not found yet (${r.detail || 'no window'})`);
   return r;
 }
 

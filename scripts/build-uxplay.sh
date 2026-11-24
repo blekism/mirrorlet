@@ -33,7 +33,11 @@ git -C "$WORK/src" fetch -q --depth 1 origin "$UXPLAY_REF"
 git -C "$WORK/src" checkout -q --force FETCH_HEAD
 
 echo "==> Building"
-cmake -S "$WORK/src" -B "$WORK/build" -G Ninja -DCMAKE_BUILD_TYPE=Release
+# -mwindows = GUI subsystem: uxplay.exe gets no console window, so Mirrorlet can spawn it
+# WITHOUT windowsHide (which would otherwise hide GStreamer's video window as well).
+# stdout/stderr still reach Mirrorlet through the pipes it passes in.
+cmake -S "$WORK/src" -B "$WORK/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_EXE_LINKER_FLAGS=-mwindows
 cmake --build "$WORK/build" --parallel
 
 echo "==> Staging into $STAGE"

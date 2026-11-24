@@ -11,9 +11,27 @@ $env:GST_PLUGIN_PATH_1_0 = ''
 $env:GST_PLUGIN_SCANNER_1_0 = Join-Path $root 'libexec\gstreamer-1.0\gst-plugin-scanner.exe'
 $env:GST_REGISTRY_1_0 = Join-Path ([IO.Path]::GetTempPath()) 'gst-verify-registry.bin'
 
+$uxplay = Join-Path $bin 'uxplay.exe'
+
+# uxplay.exe must be GUI-subsystem (-mwindows): Mirrorlet then spawns it without
+# windowsHide, which is what keeps GStreamer's video window from starting hidden.
+$bytes = [IO.File]::ReadAllBytes($uxplay)
+$pe = [BitConverter]::ToInt32($bytes, 0x3c)
+$subsystem = [BitConverter]::ToUInt16($bytes, $pe + 4 + 20 + 68)
+if ($subsystem -ne 2) { throw "uxplay.exe subsystem is $subsystem, expected 2 (GUI). Rebuild with scripts/build-uxplay.sh." }
+Write-Host '==> uxplay.exe is a GUI-subsystem executable'
+
+# PowerShell doesn't wait for GUI-subsystem programs started with '&', so use Start-Process.
+# Redirecting stdout also proves output still reaches a parent through a pipe.
 Write-Host '==> uxplay.exe -v'
-& (Join-Path $bin 'uxplay.exe') -v
-if ($LASTEXITCODE -ne 0) { throw "uxplay.exe -v failed with exit code $LASTEXITCODE (missing DLL?)" }
+$outFile = Join-Path ([IO.Path]::GetTempPath()) 'uxplay-verify-out.txt'
+$errFile = Join-Path ([IO.Path]::GetTempPath()) 'uxplay-verify-err.txt'
+$p = Start-Process -FilePath $uxplay -ArgumentList '-v' -NoNewWindow -Wait -PassThru `
+  -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+$out = (Get-Content $outFile -Raw) + (Get-Content $errFile -Raw)
+Write-Host $out
+if ($p.ExitCode -ne 0) { throw "uxplay.exe -v failed with exit code $($p.ExitCode) (missing DLL?)" }
+if ($out -notmatch 'UxPlay') { throw 'uxplay.exe -v printed nothing to stdout/stderr: output is not reaching the pipe' }
 
 $inspect = Join-Path $bin 'gst-inspect-1.0.exe'
 
