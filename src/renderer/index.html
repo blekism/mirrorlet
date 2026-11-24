@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'" />
+  <title>Mirrorlet</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <img src="icon.png" alt="" class="logo" />
+    <div>
+      <h1>Mirrorlet</h1>
+      <p class="muted">iPhone screen mirroring for Windows</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Status -->
+    <section class="card status" id="statusCard" data-status="stopped">
+      <div class="status-row">
+        <span class="dot" aria-hidden="true"></span>
+        <div class="status-text">
+          <div class="status-title" id="statusTitle">Stopped</div>
+          <div class="status-sub muted" id="statusSub">Start the receiver to make this PC visible to your iPhone.</div>
+        </div>
+        <button class="btn primary" id="toggleBtn">Start</button>
+      </div>
+      <div class="error hidden" id="errorBox"></div>
+      <div class="pin hidden" id="pinBox">Enter this code on your iPhone: <strong id="pinValue">----</strong></div>
+    </section>
+
+    <!-- How to connect -->
+    <section class="card">
+      <h2>Connect your iPhone</h2>
+      <ol class="steps">
+        <li>Join the <b>same Wi-Fi</b> as this PC.</li>
+        <li>Swipe down from the <b>top-right corner</b> to open Control Center.</li>
+        <li>Tap <b>Screen Mirroring</b> (two overlapping rectangles).</li>
+        <li>Choose <b id="nameInSteps">Mirrorlet PC</b>.</li>
+      </ol>
+      <p class="muted small">To stop, open Screen Mirroring again and tap <b>Stop Mirroring</b>. The mirror window turns sideways when you rotate the phone in apps that support landscape.</p>
+    </section>
+
+    <!-- Network check -->
+    <section class="card" id="netCard">
+      <div class="card-head">
+        <h2>Network check</h2>
+        <button class="btn ghost small" id="recheckBtn">Re-check</button>
+      </div>
+      <ul class="checks" id="checks"><li class="muted">Checking…</li></ul>
+    </section>
+
+    <!-- Settings -->
+    <section class="card">
+      <h2>Settings</h2>
+
+      <label class="field">
+        <span>Name shown on iPhone</span>
+        <input type="text" id="deviceName" maxlength="40" spellcheck="false" />
+      </label>
+
+      <div class="field">
+        <span>Quality</span>
+        <div class="seg" id="resolution">
+          <button data-v="720p">720p</button>
+          <button data-v="1080p">1080p</button>
+          <button data-v="1440p">1440p</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>Frame rate</span>
+        <div class="seg" id="fps">
+          <button data-v="30">30 fps</button>
+          <button data-v="60">60 fps</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span>Rotate picture</span>
+        <div class="seg" id="rotate">
+          <button data-v="none">None</button>
+          <button data-v="L">90° left</button>
+          <button data-v="R">90° right</button>
+        </div>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="audio" /><span>Play iPhone sound on this PC</span></label>
+        <label class="toggle"><input type="checkbox" id="fullscreen" /><span>Open mirror window full screen</span></label>
+        <label class="toggle"><input type="checkbox" id="lowLatency" /><span>Lowest lag (sound may drift from video)</span></label>
+        <label class="toggle"><input type="checkbox" id="replaceConnection" /><span>Let a new iPhone take over the screen</span></label>
+        <label class="toggle"><input type="checkbox" id="keepWindowOpen" /><span>Keep mirror window open after stopping</span></label>
+      </div>
+
+      <div class="sub-block">
+        <label class="toggle"><input type="checkbox" id="requirePin" /><span>Require a 4-digit code to connect</span></label>
+        <label class="field inline">
+          <span>Code</span>
+          <input type="text" id="pin" inputmode="numeric" maxlength="4" pattern="\d{4}" />
+        </label>
+      </div>
+
+      <div class="sub-block">
+        <label class="toggle"><input type="checkbox" id="record" /><span>Record mirroring sessions to MP4</span></label>
+        <div class="row">
+          <span class="muted small path" id="recordDirLabel">Videos folder</span>
+          <button class="btn ghost small" id="pickRecordDir">Change…</button>
+          <button class="btn ghost small" id="openRecordings">Open</button>
+        </div>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="autoStart" /><span>Start receiver when Mirrorlet opens</span></label>
+        <label class="toggle"><input type="checkbox" id="launchAtLogin" /><span>Launch Mirrorlet when Windows starts</span></label>
+        <label class="toggle"><input type="checkbox" id="closeToTray" /><span>Closing the window keeps it running in the tray</span></label>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <label class="toggle"><input type="checkbox" id="softwareDecode" /><span>Software video decoding (try if the picture is black or green)</span></label>
+        <div class="row">
+          <span class="muted small path" id="exePath"></span>
+          <button class="btn ghost small" id="pickExe">Use other uxplay.exe…</button>
+          <button class="btn ghost small" id="resetExe">Reset</button>
+        </div>
+      </details>
+    </section>
+
+    <!-- Log -->
+    <section class="card">
+      <details id="logDetails">
+        <summary>Receiver log</summary>
+        <pre id="log"></pre>
+        <button class="btn ghost small" id="copyLog">Copy log</button>
+      </details>
+    </section>
+
+    <p class="muted small footer">Powered by <a href="https://github.com/FDH2/UxPlay" target="_blank">UxPlay</a> (GPL-3.0). Not affiliated with Apple.</p>
+  </main>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

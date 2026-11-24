@@ -1,0 +1,17 @@
+Mirrorlet - iPhone screen mirroring for Windows
+
+Mirrorlet bundles UxPlay (https://github.com/FDH2/UxPlay), an open-source
+AirPlay mirroring server, together with GStreamer, FFmpeg (libav) and other
+open-source libraries built by the MSYS2 project.
+
+UxPlay is licensed under the GNU General Public License, version 3 (GPL-3.0).
+Its full license text is installed at:
+  resources\uxplay\UXPLAY-LICENSE.txt
+Source code: https://github.com/FDH2/UxPlay
+
+Mirrorlet itself is distributed under GPL-3.0-or-later.
+
+Mirrorlet is not affiliated with, endorsed by, or sponsored by Apple Inc.
+AirPlay, iPhone and iOS are trademarks of Apple Inc.
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

@@ -1,0 +1,53 @@
+{
+  "name": "mirrorlet",
+  "productName": "Mirrorlet",
+  "version": "1.0.0",
+  "description": "Mirror your iPhone screen to Windows over Wi-Fi (AirPlay receiver powered by UxPlay).",
+  "main": "src/main.js",
+  "author": "Mirrorlet",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test \"test/*.test.js\"",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "app.mirrorlet.receiver",
+    "productName": "Mirrorlet",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/uxplay",
+        "to": "uxplay",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mirrorlet",
+      "include": "build/installer.nsh",
+      "license": "build/license.txt"
+    }
+  }
+}
