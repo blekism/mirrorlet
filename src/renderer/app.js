@@ -49,6 +49,8 @@ function render(s) {
   $('pinValue').textContent = shownPin || '';
   $('pinBox').classList.toggle('hidden', !shownPin || status === 'mirroring');
 
+  $('videoActions').classList.toggle('hidden', !['connecting', 'mirroring'].includes(status));
+
   $('nameInSteps').textContent = settings.deviceName;
   renderSettings(settings, s);
 }
@@ -178,6 +180,13 @@ function wire() {
   $('pickExe').onclick = async () => { const f = await mirrorlet.pickExe(); if (f) save({ customUxplayPath: f }); };
   $('resetExe').onclick = () => save({ customUxplayPath: '' });
   $('recheckBtn').onclick = runChecks;
+  $('showVideoBtn').onclick = async () => {
+    $('showVideoBtn').disabled = true;
+    try {
+      const r = await mirrorlet.showVideoWindow();
+      toast(r.ok ? 'Mirror window brought to front' : 'No mirror window yet: the iPhone may not be sending video');
+    } finally { $('showVideoBtn').disabled = false; }
+  };
   $('copyLog').onclick = async () => {
     await navigator.clipboard.writeText(await mirrorlet.copyLogs());
     toast('Log copied');

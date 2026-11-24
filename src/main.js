@@ -9,6 +9,7 @@ const readline = require('readline');
 const { buildUxplayArgs, normalizeSettings, DEFAULTS } = require('./uxplay-args');
 const { UxplayLogParser } = require('./log-parser');
 const net = require('./windows-net');
+const { revealVideoWindow } = require('./video-window');
 
 // ---------- single instance ----------
 if (!app.requestSingleInstanceLock()) {
@@ -158,7 +159,10 @@ function startReceiver() {
     pushLog(line);
     const ev = receiver.parser.feed(line);
     if (!ev) return;
-    if (ev.type === 'state') setStatus(ev.state, { client: ev.client, error: null });
+    if (ev.type === 'state') {
+      setStatus(ev.state, { client: ev.client, error: null });
+      if (ev.state === 'mirroring') showVideoWindow({ seconds: 10 });
+    }
     else if (ev.type === 'pin') setStatus(receiver.status, { pin: ev.pin });
     else if (ev.type === 'error') setStatus(receiver.status, { error: ev.message });
   };
@@ -219,6 +223,14 @@ function stopReceiver() {
     }, 3000);
     setTimeout(done, 4000);
   });
+}
+
+async function showVideoWindow(opts = {}) {
+  const child = receiver.child;
+  if (!child) return { ok: false, detail: 'receiver not running' };
+  const r = await revealVideoWindow(child.pid, opts);
+  pushLog(r.ok ? '> mirror window shown' : `> mirror window not found yet (${r.detail || 'no window'})`);
+  return r;
 }
 
 async function restartReceiver() {
@@ -283,6 +295,7 @@ function updateTray() {
     { label: `Status: ${label}`, enabled: false },
     { type: 'separator' },
     { label: 'Open Mirrorlet', click: showWindow },
+    { label: 'Show mirror window', enabled: receiver.status === 'mirroring' || receiver.status === 'connecting', click: () => showVideoWindow({ seconds: 3 }) },
     running
       ? { label: 'Stop receiver', click: () => stopReceiver() }
       : { label: 'Start receiver', click: () => startReceiver() },
@@ -333,6 +346,7 @@ ipcMain.handle('pick-exe', async () => {
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'uxplay.exe', extensions: ['exe'] }] });
   return r.canceled ? null : r.filePaths[0];
 });
+ipcMain.handle('show-video-window', () => showVideoWindow({ seconds: 3 }));
 ipcMain.handle('copy-logs', () => receiver.logs.join('\n'));
 
 // ---------- lifecycle ----------

@@ -55,6 +55,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Check mirror-window helper compiles and runs (Windows PowerShell 5.1)
+        shell: pwsh
+        run: |
+          $out = node -e "require('./src/video-window').revealVideoWindow(process.pid,{seconds:1}).then(r=>{console.log(JSON.stringify(r));process.exit(r.detail==='none'?0:1)})"
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0) { throw "video-window helper failed: $out" }
+
       - name: Build installer
         run: npm run dist
 

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('mirrorlet', {
   openRecordings: () => ipcRenderer.invoke('open-recordings'),
   pickFolder: () => ipcRenderer.invoke('pick-folder'),
   pickExe: () => ipcRenderer.invoke('pick-exe'),
+  showVideoWindow: () => ipcRenderer.invoke('show-video-window'),
   copyLogs: () => ipcRenderer.invoke('copy-logs'),
   onState: (cb) => ipcRenderer.on('state', (_e, s) => cb(s)),
   onLog: (cb) => ipcRenderer.on('log', (_e, l) => cb(l)),
