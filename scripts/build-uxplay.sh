@@ -36,9 +36,30 @@ echo "==> Building"
 # -mwindows = GUI subsystem: uxplay.exe gets no console window, so Mirrorlet can spawn it
 # WITHOUT windowsHide (which would otherwise hide GStreamer's video window as well).
 # stdout/stderr still reach Mirrorlet through the pipes it passes in.
+# -DNO_MARCH_NATIVE=ON: UxPlay's lib/CMakeLists.txt otherwise compiles with
+# -O3 -march=native, i.e. for the BUILD machine's CPU (e.g. AVX-512 on CI runners).
+# On a PC without those instructions uxplay.exe dies at startup with exit code
+# 3221225501 = 0xC000001D STATUS_ILLEGAL_INSTRUCTION.
+# -march=x86-64 -mtune=generic: target the baseline that every 64-bit CPU (Intel or AMD)
+# supports, so the result never depends on which machine did the build.
+PORTABLE_FLAGS="-march=x86-64 -mtune=generic"
 cmake -S "$WORK/src" -B "$WORK/build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DNO_MARCH_NATIVE=ON \
+  -DCMAKE_C_FLAGS="$PORTABLE_FLAGS" -DCMAKE_CXX_FLAGS="$PORTABLE_FLAGS" \
   -DCMAKE_EXE_LINKER_FLAGS=-mwindows
 cmake --build "$WORK/build" --parallel
+
+echo "==> Checking uxplay.exe is CPU-portable (no AVX/AVX2/AVX-512 code)"
+# UxPlay's own code (statically linked into uxplay.exe) must not use ymm/zmm registers:
+# an exe built on an AVX-512 CPU (e.g. Intel 11th gen) would crash on one without it
+# (e.g. Ryzen 3000/5000). MSYS2's DLLs are NOT checked: libraries like FFmpeg and OpenSSL
+# ship AVX code on purpose and choose it at runtime only when the CPU supports it.
+if objdump -d "$WORK/build/uxplay.exe" | grep -qE '%[yz]mm[0-9]'; then
+  echo "!! uxplay.exe contains AVX/AVX-512 instructions; it would crash on CPUs without them." >&2
+  objdump -d "$WORK/build/uxplay.exe" | grep -E '%[yz]mm[0-9]' | head -5 >&2
+  exit 1
+fi
+echo "   OK: baseline x86-64 only"
 
 echo "==> Staging into $STAGE"
 rm -rf "$STAGE"

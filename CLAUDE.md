@@ -55,6 +55,9 @@ test/*.test.js         node:test unit tests (`npm test`)
   - `GST_REGISTRY_1_0`: placed in userData.
   - `HOME`: set to userData, so UxPlay's `~/.uxplayrc` and key files stay out of the user profile.
 - **uxplay.exe is GUI-subsystem** (`-DCMAKE_EXE_LINKER_FLAGS=-mwindows` in build-uxplay.sh; verify-bundle.ps1 enforces subsystem 2). main.js spawns it with `windowsHide: false` when the exe is GUI, because `windowsHide: true` makes the GStreamer video window start hidden. It falls back to `windowsHide: true` only for a console-subsystem exe (an old bundle or a custom path).
+- **Portable CPU code:** build-uxplay.sh passes `-DNO_MARCH_NATIVE=ON` and `-march=x86-64 -mtune=generic`, then fails the build if `objdump` finds ymm/zmm (AVX/AVX-512) instructions in uxplay.exe.
+  - Without this, UxPlay builds with `-march=native`. An exe built on an i5-11400 (has AVX-512) crashed on a Ryzen 5 3600 (no AVX-512) right after "using system MAC address", with exit code 3221225501 (0xC000001D, illegal instruction).
+  - MSYS2 DLLs aren't checked: they choose AVX code at runtime only when the CPU supports it.
 - **Always passed:** `-key <userData>/airplay-server-key.pem`, for a persistent AirPlay identity.
 - **Settings → flags:**
 
